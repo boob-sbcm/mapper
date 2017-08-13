@@ -15,72 +15,48 @@
  */
 package jetbrains.jetpad.base;
 
+import jetbrains.jetpad.base.function.Consumer;
 import org.junit.Test;
 
-import java.util.ConcurrentModificationException;
-import jetbrains.jetpad.base.function.Consumer;
+import static jetbrains.jetpad.base.Asyncs.registerOnFailure;
+import static jetbrains.jetpad.base.Asyncs.registerOnResult;
+import static jetbrains.jetpad.base.Asyncs.registerOnSuccess;
 
-public class SimpleAsyncRegistrationsTest {
+public class AsyncsRegistrationsTest {
   private SimpleAsync<Void> async = new SimpleAsync<>();
 
   @Test
   public void removeSuccessRegistration() {
-    Registration reg = async.onSuccess(throwingHandler());
+    Registration reg = registerOnSuccess(async, throwingHandler());
     reg.remove();
     async.success(null);
   }
 
   @Test
   public void removeFailureRegistration() {
-    Registration reg = async.onFailure(throwingFailureHandler());
+    Registration reg = registerOnFailure(async, throwingFailureHandler());
     reg.remove();
     async.failure(null);
   }
 
   @Test
   public void removeCompositeRegistration1() {
-    Registration reg = async.onResult(throwingHandler(), throwingFailureHandler());
+    Registration reg = registerOnResult(async, throwingHandler(), throwingFailureHandler());
     reg.remove();
     async.success(null);
   }
 
   @Test
   public void removeCompositeRegistration2() {
-    Registration reg = async.onResult(throwingHandler(), throwingFailureHandler());
+    Registration reg = registerOnResult(async, throwingHandler(), throwingFailureHandler());
     reg.remove();
-    async.failure(null);
-  }
-
-  @Test(expected = ConcurrentModificationException.class)
-  public void removeRegistrationInSuccessHandler() {
-    final Value<Registration> regValue = new Value<>();
-    Registration reg = async.onSuccess(new Consumer<Void>() {
-      @Override
-      public void accept(Void item) {
-        regValue.get().remove();
-      }
-    });
-    regValue.set(reg);
-    async.success(null);
-  }
-
-  @Test(expected = ConcurrentModificationException.class)
-  public void removeRegistrationInFailureHandler() {
-    final Value<Registration> regValue = new Value<>();
-    Registration reg = async.onFailure(new Consumer<Throwable>() {
-      @Override
-      public void accept(Throwable item) {
-        regValue.get().remove();
-      }
-    });
-    regValue.set(reg);
     async.failure(null);
   }
 
   @Test
   public void addSuccessHandlerAfterFailure() {
     async.failure(new Throwable());
-    Registration reg = async.onSuccess(new Consumer<Void>() {
+    Registration reg = registerOnSuccess(async, new Consumer<Void>() {
       @Override
       public void accept(Void item) {
       }
@@ -91,7 +67,7 @@ public class SimpleAsyncRegistrationsTest {
   @Test
   public void addFailureHandlerAfterSuccess() {
     async.success(null);
-    Registration reg = async.onFailure(new Consumer<Throwable>() {
+    Registration reg = registerOnFailure(async, new Consumer<Throwable>() {
       @Override
       public void accept(Throwable item) {
       }
@@ -101,7 +77,7 @@ public class SimpleAsyncRegistrationsTest {
 
   @Test
   public void removeSuccessRegistrationAfterSuccess() {
-    Registration reg = async.onSuccess(new Consumer<Void>() {
+    Registration reg = registerOnSuccess(async, new Consumer<Void>() {
       @Override
       public void accept(Void item) {
       }
@@ -112,7 +88,7 @@ public class SimpleAsyncRegistrationsTest {
 
   @Test
   public void removeSuccessRegistrationAfterFailure() {
-    Registration reg = async.onSuccess(new Consumer<Void>() {
+    Registration reg = registerOnSuccess(async, new Consumer<Void>() {
       @Override
       public void accept(Void item) {
       }
@@ -123,7 +99,7 @@ public class SimpleAsyncRegistrationsTest {
 
   @Test
   public void removeFailureRegistrationAfterSuccess() {
-    Registration reg = async.onFailure(new Consumer<Throwable>() {
+    Registration reg = registerOnFailure(async, new Consumer<Throwable>() {
       @Override
       public void accept(Throwable item) {
       }
@@ -134,7 +110,7 @@ public class SimpleAsyncRegistrationsTest {
 
   @Test
   public void removeFailureRegistrationAfterFailure() {
-    Registration reg = async.onFailure(new Consumer<Throwable>() {
+    Registration reg = registerOnFailure(async, new Consumer<Throwable>() {
       @Override
       public void accept(Throwable item) {
       }

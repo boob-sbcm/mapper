@@ -28,9 +28,9 @@ import jetbrains.jetpad.base.function.Function;
  * Implementations should make appropriate cleanup to avoid memory leaks when async is succeeded or failed.
  */
 public interface Async<ItemT> {
-  Registration onSuccess(Consumer<? super ItemT> successHandler);
-  Registration onResult(Consumer<? super ItemT> successHandler, Consumer<Throwable> failureHandler);
-  Registration onFailure(Consumer<Throwable> failureHandler);
+  void onSuccess(Consumer<? super ItemT> successHandler);
+  void onResult(Consumer<? super ItemT> successHandler, Consumer<Throwable> failureHandler);
+  void onFailure(Consumer<Throwable> failureHandler);
 
   /**
    * This method must always create new async every time it's called.

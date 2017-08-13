@@ -47,7 +47,7 @@ import org.junit.runners.Suite;
     IntervalTest.class,
     PersistersTest.class,
     RegistrationMapTest.class,
-    SimpleAsyncRegistrationsTest.class,
+    AsyncsRegistrationsTest.class,
     SimpleAsyncTest.class,
     ThrowableHandlersTest.class,
 })

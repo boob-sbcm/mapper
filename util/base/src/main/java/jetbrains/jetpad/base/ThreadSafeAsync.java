@@ -26,23 +26,23 @@ public final class ThreadSafeAsync<ItemT> implements ResolvableAsync<ItemT> {
   }
 
   @Override
-  public Registration onSuccess(Consumer<? super ItemT> successHandler) {
+  public void onSuccess(Consumer<? super ItemT> successHandler) {
     synchronized (myAsync) {
-      return safeReg(myAsync.onSuccess(successHandler));
+      myAsync.onSuccess(successHandler);
     }
   }
 
   @Override
-  public Registration onResult(Consumer<? super ItemT> successHandler, Consumer<Throwable> failureHandler) {
+  public void onResult(Consumer<? super ItemT> successHandler, Consumer<Throwable> failureHandler) {
     synchronized (myAsync) {
-      return safeReg(myAsync.onResult(successHandler, failureHandler));
+      myAsync.onResult(successHandler, failureHandler);
     }
   }
 
   @Override
-  public Registration onFailure(Consumer<Throwable> failureHandler) {
+  public void onFailure(Consumer<Throwable> failureHandler) {
     synchronized (myAsync) {
-      return safeReg(myAsync.onFailure(failureHandler)) ;
+      myAsync.onFailure(failureHandler);
     }
   }
 
@@ -58,17 +58,6 @@ public final class ThreadSafeAsync<ItemT> implements ResolvableAsync<ItemT> {
     synchronized (myAsync) {
       return Asyncs.select(this, success, new ThreadSafeAsync<ResultT>());
     }
-  }
-
-  private Registration safeReg(final Registration r) {
-    return new Registration() {
-      @Override
-      protected void doRemove() {
-        synchronized (myAsync) {
-          r.remove();
-        }
-      }
-    };
   }
 
   public void success(ItemT item) {

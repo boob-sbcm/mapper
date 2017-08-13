@@ -48,27 +48,24 @@ public class Asyncs {
         public void accept(Throwable failure) {
           finished.set(true);
         }
-      }).remove();
+      });
     return finished.get();
   }
 
   public static <ValueT> Async<ValueT> constant(final ValueT val) {
     return new Async<ValueT>() {
       @Override
-      public Registration onSuccess(Consumer<? super ValueT> successHandler) {
+      public void onSuccess(Consumer<? super ValueT> successHandler) {
         successHandler.accept(val);
-        return Registration.EMPTY;
       }
 
       @Override
-      public Registration onResult(Consumer<? super ValueT> successHandler, Consumer<Throwable> failureHandler) {
-        return onSuccess(successHandler);
+      public void onResult(Consumer<? super ValueT> successHandler, Consumer<Throwable> failureHandler) {
+        onSuccess(successHandler);
       }
 
       @Override
-      public Registration onFailure(Consumer<Throwable> failureHandler) {
-        return Registration.EMPTY;
-      }
+      public void onFailure(Consumer<Throwable> failureHandler) { }
 
       @Override
       public <ResultT> Async<ResultT> map(final Function<? super ValueT, ? extends ResultT> success) {
@@ -99,19 +96,16 @@ public class Asyncs {
   public static <ValueT> Async<ValueT> failure(final Throwable t) {
     return new Async<ValueT>() {
       @Override
-      public Registration onSuccess(Consumer<? super ValueT> successHandler) {
-        return Registration.EMPTY;
+      public void onSuccess(Consumer<? super ValueT> successHandler) { }
+
+      @Override
+      public void onResult(Consumer<? super ValueT> successHandler, Consumer<Throwable> failureHandler) {
+        onFailure(failureHandler);
       }
 
       @Override
-      public Registration onResult(Consumer<? super ValueT> successHandler, Consumer<Throwable> failureHandler) {
-        return onFailure(failureHandler);
-      }
-
-      @Override
-      public Registration onFailure(Consumer<Throwable> failureHandler) {
+      public void onFailure(Consumer<Throwable> failureHandler) {
         failureHandler.accept(t);
-        return Registration.EMPTY;
       }
 
       @Override
@@ -345,8 +339,8 @@ public class Asyncs {
     return result;
   }
 
-  public static <ValueT> Registration delegate(Async<? extends ValueT> from, final AsyncResolver<? super ValueT> to) {
-    return from.onResult(new Consumer<ValueT>() {
+  public static <ValueT> void delegate(Async<? extends ValueT> from, final AsyncResolver<? super ValueT> to) {
+    from.onResult(new Consumer<ValueT>() {
         @Override
         public void accept(ValueT item) {
           to.success(item);
@@ -384,6 +378,53 @@ public class Asyncs {
     firstPaired.pair(secondPaired, proxy);
     secondPaired.pair(firstPaired, proxy);
     return res;
+  }
+
+  public static <ValueT> Registration registerOnSuccess(Async<ValueT> async, Consumer<? super ValueT> successHandler) {
+    CancellableConsumer<ValueT> consumer = new CancellableConsumer<>(successHandler);
+    async.onSuccess(consumer);
+    return consumer;
+  }
+
+  public static <ValueT> Registration registerOnFailure(Async<ValueT> async, Consumer<Throwable> failureHandler) {
+    CancellableConsumer<Throwable> consumer = new CancellableConsumer<>(failureHandler);
+    async.onFailure(consumer);
+    return consumer;
+  }
+
+  public static <ValueT> Registration registerOnResult(Async<ValueT> async, Consumer<? super ValueT> successHandler, Consumer<Throwable> failureHandler) {
+    final CancellableConsumer<ValueT> success = new CancellableConsumer<>(successHandler);
+    async.onSuccess(success);
+    final CancellableConsumer<Throwable> failure = new CancellableConsumer<>(failureHandler);
+    async.onFailure(failure);
+    return new Registration() {
+      @Override
+      protected void doRemove() {
+        success.remove();
+        failure.remove();
+      }
+    };
+  }
+
+  private static class CancellableConsumer<ValueT> extends Registration implements Consumer<ValueT> {
+    private final Consumer<? super ValueT> myTarget;
+    private volatile boolean myCancelled = false;
+
+    private CancellableConsumer(Consumer<? super ValueT> target) {
+      myTarget = target;
+    }
+
+    @Override
+    public void accept(ValueT value) {
+      if (!myCancelled) {
+        myTarget.accept(value);
+      }
+    }
+
+    @Override
+    protected void doRemove() {
+      myCancelled = true;
+    }
   }
 
   @GwtIncompatible("Uses threading primitives")
@@ -468,7 +509,7 @@ public class Asyncs {
       if (async.hasSucceeded() || async.hasFailed()) {
         return;
       }
-      myReg = myAsync.onResult(
+      myReg = registerOnResult(myAsync,
           new Consumer<ItemT>() {
             @Override
             public void accept(ItemT item) {

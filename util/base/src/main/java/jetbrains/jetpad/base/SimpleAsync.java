@@ -15,10 +15,11 @@
  */
 package jetbrains.jetpad.base;
 
-import java.util.ArrayList;
-import java.util.List;
 import jetbrains.jetpad.base.function.Consumer;
 import jetbrains.jetpad.base.function.Function;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class SimpleAsync<ItemT> implements ResolvableAsync<ItemT> {
   private ItemT mySuccessItem = null;
@@ -31,54 +32,31 @@ public final class SimpleAsync<ItemT> implements ResolvableAsync<ItemT> {
   private List<Consumer<Throwable>> myFailureHandlers = new ArrayList<>();
 
   @Override
-  public Registration onSuccess(final Consumer<? super ItemT> successHandler) {
+  public void onSuccess(final Consumer<? super ItemT> successHandler) {
     if (alreadyHandled()) {
       if (mySucceeded) {
         successHandler.accept(mySuccessItem);
       }
-      return Registration.EMPTY;
+      return;
     }
     mySuccessHandlers.add(successHandler);
-    return new Registration() {
-      @Override
-      protected void doRemove() {
-        if (mySuccessHandlers != null) {
-          mySuccessHandlers.remove(successHandler);
-        }
-      }
-    };
   }
 
   @Override
-  public Registration onResult(Consumer<? super ItemT> successHandler, final Consumer<Throwable> failureHandler) {
-    final Registration successRegistration = onSuccess(successHandler);
-    final Registration failureRegistration = onFailure(failureHandler);
-    return new Registration() {
-      @Override
-      protected void doRemove() {
-        successRegistration.remove();
-        failureRegistration.remove();
-      }
-    };
+  public void onResult(Consumer<? super ItemT> successHandler, final Consumer<Throwable> failureHandler) {
+    onSuccess(successHandler);
+    onFailure(failureHandler);
   }
 
   @Override
-  public Registration onFailure(final Consumer<Throwable> handler) {
+  public void onFailure(final Consumer<Throwable> handler) {
     if (alreadyHandled()) {
       if (myFailed) {
         handler.accept(myFailureThrowable);
       }
-      return Registration.EMPTY;
+      return;
     }
     myFailureHandlers.add(handler);
-    return new Registration() {
-      @Override
-      protected void doRemove() {
-        if (myFailureHandlers != null) {
-          myFailureHandlers.remove(handler);
-        }
-      }
-    };
   }
 
   @Override
