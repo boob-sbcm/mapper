@@ -57,6 +57,7 @@
 
     <java.source.level>1.7</java.source.level>
     <java.target.level>1.8</java.target.level>
+      <kotlin.version>1.2-M2</kotlin.version>
   </properties>
 
   <dependencyManagement>
@@ -148,7 +149,21 @@
     </dependencies>
   </dependencyManagement>
 
-  <build>
+    <dependencies>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>${kotlin.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-test</artifactId>
+            <version>${kotlin.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
     <pluginManagement>
       <plugins>
         <plugin>
@@ -259,7 +274,30 @@
 
       </plugins>
     </pluginManagement>
-  </build>
+        <plugins>
+            <plugin>
+                <groupId>org.jetbrains.kotlin</groupId>
+                <artifactId>kotlin-maven-plugin</artifactId>
+                <version>${kotlin.version}</version>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <phase>test-compile</phase>
+                        <goals>
+                            <goal>test-compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
   <repositories>
     <repository>
@@ -270,10 +308,35 @@
         <enabled>true</enabled>
       </snapshots>
     </repository>
+      <repository>
+          <releases>
+              <enabled>true</enabled>
+          </releases>
+          <snapshots>
+              <enabled>false</enabled>
+          </snapshots>
+          <id>bintray.kotlin.eap</id>
+          <name>Bintray Kotlin 1.2 EAP Repository</name>
+          <url>http://dl.bintray.com/kotlin/kotlin-eap-1.2</url>
+      </repository>
 
   </repositories>
 
-  <distributionManagement>
+    <pluginRepositories>
+        <pluginRepository>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>bintray.kotlin.eap</id>
+            <name>Bintray Kotlin 1.2 EAP Repository</name>
+            <url>http://dl.bintray.com/kotlin/kotlin-eap-1.2</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <distributionManagement>
     <repository>
       <id>repository.jetbrains.com</id>
       <name>repository.jetbrains.com-releases</name>
